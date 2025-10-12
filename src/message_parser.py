@@ -1,8 +1,6 @@
-# src/message_parser.py
-
-import ast
+import json
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import List, Tuple
 from dataclasses import dataclass
 
 
@@ -22,16 +20,24 @@ class MessageParser:
     @staticmethod
     def parse_price_levels(price_str: str) -> List[Tuple[float, float]]:
         """
-        Convert string like "[['100.5', '1.5'], ['100.4', '2.0']]"
-        to list of tuples [(100.5, 1.5), (100.4, 2.0)]
+        Convert string like "[['100.5', '1.5'], ['100.4', '2.0']]" or
+        [["100.5", "1.5"], ["100.4", "2.0"]] to list of tuples
+        [(100.5, 1.5), (100.4, 2.0)]
         """
-        if price_str == "[]":
+        if not price_str or price_str == "[]":
             return []
 
-        # Use ast.literal_eval to safely parse the string
-        raw_list = ast.literal_eval(price_str)
+        try:
+            # Normalize single quotes to double quotes for valid JSON
+            if "'" in price_str and '"' not in price_str:
+                price_str = price_str.replace("'", '"')
 
-        # Convert strings to floats
+            raw_list = json.loads(price_str)
+        except json.JSONDecodeError:
+            # Fallback: try again after replacing mixed quotes
+            raw_list = json.loads(price_str.replace("'", '"'))
+
+        # Convert all string pairs to floats
         return [(float(price), float(qty)) for price, qty in raw_list]
 
     @staticmethod
@@ -40,7 +46,6 @@ class MessageParser:
         Snapshot = both bids and asks have data (typically 10 levels)
         Update = one or both might be empty or have fewer entries
         """
-        # First message or both sides have full depth is snapshot
         return len(bids) >= 10 and len(asks) >= 10
 
     def parse_message(self, row: pd.Series) -> OrderBookMessage:
