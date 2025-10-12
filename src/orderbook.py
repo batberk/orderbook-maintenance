@@ -158,74 +158,59 @@ class OrderBook:
         if order_side == 'buy':
             # Buy order matches against asks (removes liquidity from ask side)
             # Can match at prices <= our limit price
+            to_delete = []
 
-            # Get all ask prices (sorted low to high)
-            ask_prices = list(self.asks.keys())
-
-            for ask_price in ask_prices:
+            for ask_price, available_qty in self.asks.items():
                 if remaining_qty <= 0:
                     break
-
-                # Can only match if ask price <= our limit price
                 if ask_price > price:
-                    break  # No more matching possible
-
-                available_qty = self.asks[ask_price]
+                    break
 
                 if available_qty <= remaining_qty:
-                    # Fully consume this ask level
                     remaining_qty -= available_qty
-                    del self.asks[ask_price]
+                    to_delete.append(ask_price)
                 else:
-                    # Partially consume this ask level
-                    self.asks[ask_price] -= remaining_qty
+                    self.asks[ask_price] = available_qty - remaining_qty
                     remaining_qty = 0
+                    break
 
-            # If we have remaining quantity, add it to bid side
+            for ask_price in to_delete:
+                del self.asks[ask_price]
+
             if remaining_qty > 0:
                 if price in self.bids:
                     self.bids[price] += remaining_qty
                 else:
                     self.bids[price] = remaining_qty
-
-                # Trim to depth
                 self._trim_to_depth()
 
         else:  # sell order
             # Sell order matches against bids (removes liquidity from bid side)
             # Can match at prices >= our limit price
+            to_delete = []
 
-            # Get all bid prices (sorted high to low due to our reverse sort)
-            bid_prices = list(self.bids.keys())
-
-            for bid_price in bid_prices:
+            for bid_price, available_qty in self.bids.items():
                 if remaining_qty <= 0:
                     break
-
-                # Can only match if bid price >= our limit price
                 if bid_price < price:
-                    break  # No more matching possible
-
-                available_qty = self.bids[bid_price]
+                    break
 
                 if available_qty <= remaining_qty:
-                    # Fully consume this bid level
                     remaining_qty -= available_qty
-                    del self.bids[bid_price]
+                    to_delete.append(bid_price)
                 else:
-                    # Partially consume this bid level
-                    self.bids[bid_price] -= remaining_qty
+                    self.bids[bid_price] = available_qty - remaining_qty
                     remaining_qty = 0
+                    break
 
-            # If we have remaining quantity, add it to ask side
+            for bid_price in to_delete:
+                del self.bids[bid_price]
+
             if remaining_qty > 0:
                 if price in self.asks:
                     self.asks[price] += remaining_qty
                 else:
                     self.asks[price] = remaining_qty
-
-                # Trim to depth
                 self._trim_to_depth()
 
-        # Return updated top 10
         return self.get_top_n(10)
