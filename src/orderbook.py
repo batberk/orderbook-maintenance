@@ -74,17 +74,12 @@ class OrderBook:
         self.last_update_time = timestamp
 
     def _trim_to_depth(self) -> None:
-        """Keep only top N levels per side"""
-        # Keep first 'depth' items (already sorted)
+        """Keep only top N levels per side using efficient slicing"""
         if len(self.bids) > self.depth:
-            # Get keys to delete
-            keys_to_delete = list(self.bids.keys())[self.depth:]
-            for key in keys_to_delete:
+            for key in list(self.bids.islice(self.depth, None)):
                 del self.bids[key]
-
         if len(self.asks) > self.depth:
-            keys_to_delete = list(self.asks.keys())[self.depth:]
-            for key in keys_to_delete:
+            for key in list(self.asks.islice(self.depth, None)):
                 del self.asks[key]
 
     def get_top_n(self, n: int = 10) -> Dict[str, List[Tuple[float, float]]]:

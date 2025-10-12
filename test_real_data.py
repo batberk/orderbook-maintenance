@@ -12,7 +12,7 @@ def test_with_real_data():
     """Test processing real CSV file"""
 
     # Update this path to your actual CSV file
-    data_file = "data/raw/orderbooks-10.csv"  # Adjust filename
+    data_file = "data/raw/orderbooks-1000.csv"  # Adjust filename
 
     if not os.path.exists(data_file):
         print(f"Error: Data file not found at {data_file}")
@@ -36,7 +36,7 @@ def test_with_real_data():
             data_file,
             target_symbol,
             target_timestamp,
-            depth=10
+            depth=1000
         )
 
         if orderbook is None:
