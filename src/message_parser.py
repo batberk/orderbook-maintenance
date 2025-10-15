@@ -9,7 +9,7 @@ class OrderBookMessage:
     """Structured message data"""
     timestamp: float
     symbol: str
-    bids: List[Tuple[float, float]]  # [(price, qty), ...]
+    bids: List[Tuple[float, float]]
     asks: List[Tuple[float, float]]
     is_snapshot: bool
 
@@ -19,11 +19,7 @@ class MessageParser:
 
     @staticmethod
     def parse_price_levels(price_str: str) -> List[Tuple[float, float]]:
-        """
-        Convert string like "[['100.5', '1.5'], ['100.4', '2.0']]" or
-        [["100.5", "1.5"], ["100.4", "2.0"]] to list of tuples
-        [(100.5, 1.5), (100.4, 2.0)]
-        """
+        """Convert string representation of price levels to list of tuples"""
         if not price_str or price_str == "[]":
             return []
 
@@ -34,7 +30,6 @@ class MessageParser:
 
             raw_list = json.loads(price_str)
         except json.JSONDecodeError:
-            # Fallback: try again after replacing mixed quotes
             raw_list = json.loads(price_str.replace("'", '"'))
 
         # Convert all string pairs to floats
@@ -43,7 +38,7 @@ class MessageParser:
     @staticmethod
     def is_snapshot(bids: List, asks: List) -> bool:
         """
-        Snapshot = both bids and asks have data (typically 10 levels)
+        Snapshot = both bids and asks have data ( 10 levels)
         Update = one or both might be empty or have fewer entries
         """
         return len(bids) >= 10 and len(asks) >= 10

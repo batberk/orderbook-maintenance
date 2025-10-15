@@ -1,12 +1,8 @@
-# src/orderbook.py
-
 from sortedcontainers import SortedDict
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 
 class OrderBook:
-    """Efficient orderbook using SortedDict"""
-
     def __init__(self, symbol: str, depth: int = 10):
         self.symbol = symbol
         self.depth = depth
@@ -91,46 +87,32 @@ class OrderBook:
 
     def notional_ahead(self, side: str, price: float) -> float:
         """
-        Calculate total notional value ahead of given price
-
-        Notional = price * quantity for each level
-        "Ahead" means:
-        - For bids: all prices >= given price (higher or equal)
-        - For asks: all prices <= given price (lower or equal)
-
+        Calculate total notional value ahead of given price level
         Args:
             side: 'bid' or 'ask'
             price: Price level to calculate from
 
         Returns:
             Total notional value (sum of price * quantity)
-
-        Example:
-            Bids: [100->2.0, 99->3.0, 98->1.0]
-            notional_ahead('bid', 99) = (100*2.0) + (99*3.0) = 200 + 297 = 497
         """
         book = self.bids if side == 'bid' else self.asks
         total_notional = 0.0
 
         if side == 'bid':
-            # For bids: better prices are HIGHER
             # Sum all levels with price >= given price
             for p, q in book.items():
                 if p >= price:
                     total_notional += p * q
                 else:
                     # SortedDict is ordered, we can break early
-                    # (bids go from high to low)
                     break
         else:  # ask
-            # For asks: better prices are LOWER
             # Sum all levels with price <= given price
             for p, q in book.items():
                 if p <= price:
                     total_notional += p * q
                 else:
                     # SortedDict is ordered, we can break early
-                    # (asks go from low to high)
                     break
 
         return total_notional
@@ -139,11 +121,6 @@ class OrderBook:
                           quantity: float) -> Dict[str, List[Tuple[float, float]]]:
         """
         Simulate placing a limit order with matching engine logic
-
-        Limit Order Behavior:
-        - BUY order: Will match against asks at or below limit price
-        - SELL order: Will match against bids at or above limit price
-        - Unmatched quantity joins the book on appropriate side
 
         Args:
             order_side: 'buy' or 'sell'

@@ -1,5 +1,3 @@
-# main.py
-
 import argparse
 from src.processor import OrderBookProcessor
 

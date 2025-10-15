@@ -1,5 +1,3 @@
-# src/processor.py
-
 import csv
 from typing import Dict
 from .orderbook import OrderBook
